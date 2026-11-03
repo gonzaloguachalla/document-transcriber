@@ -1,0 +1,30 @@
+:root{--fondo:#f6f7fb;--tarjeta:#fff;--texto:#1b1f2a;--suave:#4a5163;--borde:#c4c9d6;
+  --acento:#1d4ed8;--acento-txt:#fff;--resalte:#fff3b0;--resalte-borde:#b58100;--error:#9b1c1c;--error-bg:#fde8e8}
+@media (prefers-color-scheme:dark){:root{--fondo:#12141a;--tarjeta:#1c1f29;--texto:#eef0f6;--suave:#b4bacb;
+  --borde:#454b5e;--acento:#7aa2ff;--acento-txt:#0b1020;--resalte:#4a3f00;--resalte-borde:#ffd34d;--error:#ffb4b4;--error-bg:#3d1b1b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--texto);font:1rem/1.6 system-ui,sans-serif}
+header,main{max-width:860px;margin:0 auto;padding:1rem}
+h1{margin:.5rem 0 0;font-size:1.6rem}header p{margin:.2rem 0;color:var(--suave)}
+.solo-lectores{position:absolute;left:-9999px}
+.saltar{position:absolute;left:-9999px}.saltar:focus{left:1rem;top:1rem;background:var(--tarjeta);padding:.5rem;z-index:9}
+.zona{background:var(--tarjeta);border:2px dashed var(--borde);border-radius:12px;padding:1.5rem;text-align:center}
+.zona.sobre{border-color:var(--acento);background:var(--resalte)}
+.nota{color:var(--suave);font-size:.9rem;margin:.5rem 0 0}
+button,select{font:inherit;color:var(--texto);background:var(--tarjeta);border:1px solid var(--borde);
+  border-radius:8px;padding:.5rem .9rem;min-height:44px;cursor:pointer}
+button.primario{background:var(--acento);color:var(--acento-txt);border-color:var(--acento);font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+.controles{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:1rem 0}
+.controles label{display:flex;gap:.4rem;align-items:center}
+.progreso{display:flex;gap:.75rem;align-items:center}
+progress{flex:1;height:14px}
+.mensaje{background:var(--error-bg);color:var(--error);border:1px solid var(--error);border-radius:8px;padding:.75rem 1rem;margin-top:1rem}
+.estado{color:var(--suave);min-height:1.5em}
+.texto{background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;padding:.5rem;max-height:60vh;overflow:auto}
+.oracion{display:block;width:100%;text-align:left;border:0;border-left:4px solid transparent;border-radius:6px;
+  background:none;padding:.5rem .75rem;min-height:0;margin:0;font-size:1.05rem}
+.oracion:hover{background:var(--fondo)}
+.oracion.activa{background:var(--resalte);border-left-color:var(--resalte-borde)}
+@media (max-width:560px){.controles button,.controles label{flex:1 1 45%}}

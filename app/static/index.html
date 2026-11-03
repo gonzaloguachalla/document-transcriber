@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lector de documentos Word</title>
+  <link rel="stylesheet" href="/static/estilos.css">
+</head>
+<body>
+  <a class="saltar" href="#texto">Saltar al texto</a>
+  <header><h1>Lector de documentos Word</h1><p>Sube un archivo .docx y escúchalo en español.</p></header>
+
+  <main>
+    <section aria-labelledby="t-subir">
+      <h2 id="t-subir" class="solo-lectores">Subir documento</h2>
+      <div id="zona" class="zona" tabindex="-1">
+        <p>Arrastra aquí un archivo <strong>.docx</strong> o</p>
+        <button type="button" id="btn-elegir" class="primario">Elegir archivo</button>
+        <input type="file" id="archivo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+        <p class="nota" id="nota-limite">Tamaño máximo: 10 MB.</p>
+      </div>
+      <div id="mensaje" role="alert" class="mensaje" hidden></div>
+      <p id="estado" role="status" aria-live="polite" class="estado"></p>
+    </section>
+
+    <section id="lector" hidden aria-labelledby="t-lector">
+      <h2 id="t-lector" class="solo-lectores">Reproductor</h2>
+      <div class="controles" role="group" aria-label="Controles de lectura">
+        <button type="button" id="btn-play" class="primario">▶ Reproducir</button>
+        <button type="button" id="btn-pausa">⏸ Pausar</button>
+        <button type="button" id="btn-continuar">⏯ Continuar</button>
+        <button type="button" id="btn-stop">⏹ Detener</button>
+        <label>Voz
+          <select id="voz"></select>
+        </label>
+        <label>Velocidad
+          <select id="velocidad">
+            <option value="0.75">0.75x</option><option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option><option value="1.5">1.5x</option>
+            <option value="1.75">1.75x</option><option value="2">2x</option>
+          </select>
+        </label>
+        <button type="button" id="btn-descargar">⬇ Descargar audio (WAV)</button>
+      </div>
+      <div class="progreso">
+        <progress id="progreso" value="0" max="1" aria-label="Progreso de lectura"></progress>
+        <span id="progreso-txt" aria-live="off">0 / 0</span>
+      </div>
+      <audio id="audio" preload="auto"></audio>
+      <h2 id="texto-titulo">Texto</h2>
+      <div id="texto" class="texto" role="list" aria-labelledby="texto-titulo"></div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
