@@ -164,8 +164,13 @@ def _sigla_a_voz(m: re.Match) -> str:
     return texto + ("," if re.match(r"\s+[A-ZÁÉÍÓÚÑ0-9]", m.string[m.end():m.end() + 3]) else "")
 
 
+_RE_EEUU = re.compile(r"(?<![\w.])EE\.?\s?UU\b(\.?)")
+
+
 def normalizar_para_voz(texto: str) -> str:
     """Texto que se envía a la voz; el que se muestra en pantalla no cambia."""
+    # «EE.UU.» -> «Estados Unidos»; el punto final solo se conserva si cierra la oración.
+    texto = _RE_EEUU.sub(lambda m: "Estados Unidos" + ("." if m.group(1) and not m.string[m.end():].strip() else ""), texto)
     texto = _RE_COD_LETRA.sub(lambda m: m.group(0).replace(".", " punto "), texto)
     texto = _RE_COD_NUM.sub(
         lambda m: m.group(0) if _es_numero_normal(m.group(0)) else m.group(0).replace(".", " punto "), texto)
