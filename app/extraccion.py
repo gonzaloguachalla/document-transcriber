@@ -1,11 +1,13 @@
 """Extracción de texto de .docx, limpieza y división en oraciones."""
 import io
+import os
 import re
 import zipfile
 
 from docx import Document
 from docx.table import Table
 from docx.text.paragraph import Paragraph
+from num2words import num2words
 
 
 class DocumentoInvalido(Exception):
@@ -74,7 +76,8 @@ _ABREVIATURAS = ("Sr", "Sra", "Srta", "Dr", "Dra", "Ud", "Uds", "Lic", "Ing", "P
 _MARCA = "\u0001"
 _RE_ABREV = re.compile(r"\b(" + "|".join(_ABREVIATURAS) + r")\.(?=\s)")
 _RE_FIN = re.compile(r"(?<=[.!?…])[\"'»”)\]]*\s+(?=[\"'«“¿¡(\[]*[A-ZÁÉÍÓÚÑÜ0-9])")
-_MAX_LARGO = 300
+# Las oraciones más largas se parten por comas para que el audio empiece rápido (más alto = lectura más fluida).
+_MAX_LARGO = int(os.getenv("MAX_SENTENCE_CHARS", "600"))
 
 
 def _partir_largas(oracion: str) -> list[str]:
@@ -164,17 +167,45 @@ def _sigla_a_voz(m: re.Match) -> str:
     return texto + ("," if re.match(r"\s+[A-ZÁÉÍÓÚÑ0-9]", m.string[m.end():m.end() + 3]) else "")
 
 
+# Palabras que la voz pronuncia mal: se reescriben como suenan. Añade aquí las que necesites.
+_PRONUNCIACION = {"OWASP": "Ouasp"}
+_RE_PRONUNCIACION = re.compile(r"(?<![\w.])(" + "|".join(_PRONUNCIACION) + r")(?!\w)")
 _RE_EEUU = re.compile(r"(?<![\w.])EE\.?\s?UU\b(\.?)")
+# Código de siglas pegadas a su número: FN-123, A5, FP/007.
+_RE_CODIGO = re.compile(r"(?<![\w.])([A-ZÑ]{1,4})[-/]?(\d+)(?![\w])")
+# Enteros con miles (1.250.000) o decimales con coma (3,5).
+_RE_NUMERO = re.compile(r"(?<![\w.,])(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?(?!\w|\.\d)")
+
+
+def _leer_cifras(cifras: str) -> str:
+    """Número en palabras; con ceros a la izquierda (007) se lee dígito a dígito."""
+    if len(cifras) > 1 and cifras.startswith("0"):
+        return " ".join(_DIGITOS[int(c)] for c in cifras)
+    return num2words(int(cifras), lang="es")
+
+
+def _numero_a_voz(m: re.Match) -> str:
+    entero, _, decimales = m.group(0).partition(",")
+    texto = _leer_cifras(entero.replace(".", ""))
+    return f"{texto} coma {_leer_cifras(decimales)}" if decimales else texto
+
+
+def _codigo_a_voz(m: re.Match) -> str:
+    letras = " ".join(_LETRAS[c] for c in m.group(1)).replace("doble-uve", "doble uve")
+    return f"{letras}, {_leer_cifras(m.group(2))}"
 
 
 def normalizar_para_voz(texto: str) -> str:
     """Texto que se envía a la voz; el que se muestra en pantalla no cambia."""
     # «EE.UU.» -> «Estados Unidos»; el punto final solo se conserva si cierra la oración.
     texto = _RE_EEUU.sub(lambda m: "Estados Unidos" + ("." if m.group(1) and not m.string[m.end():].strip() else ""), texto)
+    texto = _RE_PRONUNCIACION.sub(lambda m: _PRONUNCIACION[m.group(1)], texto)
     texto = _RE_COD_LETRA.sub(lambda m: m.group(0).replace(".", " punto "), texto)
     texto = _RE_COD_NUM.sub(
         lambda m: m.group(0) if _es_numero_normal(m.group(0)) else m.group(0).replace(".", " punto "), texto)
+    texto = _RE_CODIGO.sub(_codigo_a_voz, texto)
     texto = _RE_SIGLA.sub(_sigla_a_voz, texto)
+    texto = _RE_NUMERO.sub(_numero_a_voz, texto)
     texto = _RE_VER.sub(", versión ", texto)
     texto = re.sub(r"\s*[(\[]\s*", ", ", texto)          # los paréntesis se leen como una pausa
     texto = re.sub(r"\s*[)\]]", ",", texto)
