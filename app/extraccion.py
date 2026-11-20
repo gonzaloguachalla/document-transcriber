@@ -77,7 +77,7 @@ _MARCA = "\u0001"
 _RE_ABREV = re.compile(r"\b(" + "|".join(_ABREVIATURAS) + r")\.(?=\s)")
 _RE_FIN = re.compile(r"(?<=[.!?…])[\"'»”)\]]*\s+(?=[\"'«“¿¡(\[]*[A-ZÁÉÍÓÚÑÜ0-9])")
 # Las oraciones más largas se parten por comas para que el audio empiece rápido (más alto = lectura más fluida).
-_MAX_LARGO = int(os.getenv("MAX_SENTENCE_CHARS", "600"))
+_MAX_LARGO = int(os.getenv("MAX_SENTENCE_CHARS", "1000"))
 
 
 def _partir_largas(oracion: str) -> list[str]:
@@ -106,18 +106,29 @@ def _partir_largas(oracion: str) -> list[str]:
 
 
 def dividir_oraciones(lineas: list[str]) -> list[str]:
-    oraciones = []
+    """Una sección por párrafo; solo se parte si supera _MAX_LARGO (primero por oraciones, luego por comas)."""
+    secciones = []
     for linea in lineas:
         linea = limpiar(linea)
-        if not linea:
+        if not linea or not re.search(r"\w", linea):
+            continue  # descarta líneas sin ninguna letra o dígito (p. ej. "---")
+        if len(linea) <= _MAX_LARGO:
+            secciones.append(linea)
             continue
         protegida = _RE_ABREV.sub(lambda m: m.group(1) + _MARCA, linea)
+        actual = ""
         for parte in _RE_FIN.split(protegida):
             parte = parte.replace(_MARCA, ".").strip()
-            # Descarta fragmentos sin ninguna letra o dígito (p. ej. "---").
-            if parte and re.search(r"\w", parte):
-                oraciones.extend(_partir_largas(parte))
-    return oraciones
+            if not parte:
+                continue
+            if actual and len(actual) + len(parte) + 1 > _MAX_LARGO:
+                secciones.extend(_partir_largas(actual))
+                actual = parte
+            else:
+                actual = f"{actual} {parte}".strip()
+        if actual:
+            secciones.extend(_partir_largas(actual))
+    return [s for s in secciones if re.search(r"\w", s)]
 
 
 # Códigos de numeración (L2.1.1, 3.2.1, v1.2): las voces se saltan el punto entre números.
